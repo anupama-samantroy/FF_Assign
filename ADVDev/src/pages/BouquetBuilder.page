@@ -82,9 +82,8 @@
                 </apex:pageBlockSectionItem>
                 
                 <!-- Show the Pie chart of blooms (by Quantity) in the Bouquet -->
-                <apex:pageBlockSectionItem >
-                
-                    <apex:outputPanel rendered="{!chartData.size > 0}">
+                <apex:pageBlockSectionItem >               
+                    
                         <apex:chart data="{!ChartData}" height="200" width="600" >
                         
                             <apex:legend position="right"/>
@@ -94,9 +93,8 @@
                                 <apex:chartLabel display="middle" orientation="vertical"  font="bold 10px Helvetica"/>
                                 
                             </apex:pieSeries>
-                        </apex:chart>
-                        
-                    </apex:outputPanel>   
+                            
+                        </apex:chart>    
                                   
                 </apex:pageBlockSectionItem>   
                              
