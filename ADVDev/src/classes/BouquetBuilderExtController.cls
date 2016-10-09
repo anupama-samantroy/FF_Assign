@@ -22,7 +22,7 @@ public with sharing class BouquetBuilderExtController {
     //to hold the previous selected flower family
     public String prevSelectedFlowerFamily {get; set;}
     
-    //to identify if new or edit
+    //to identify if new or existing bouquet
     public Boolean isEdit {get; set;}
     
     //to hold the Color set for the Pie Chart
@@ -43,7 +43,7 @@ public with sharing class BouquetBuilderExtController {
     //to hold the Flower details
     public Map<Id,Product2> mapFlower {get; set;} 
     
-    //to hold the HTML color code for color
+    //to hold the HTML color code for the flower color
     public Map<String,String> mapHTMLColor {get;set;}
     
     //standard set controller to implement pagination
@@ -67,7 +67,7 @@ public with sharing class BouquetBuilderExtController {
         totalCost = 0 ;
         pageSize = Integer.valueOf(System.Label.BouquetBuilderPageSize);
         
-        //get the details of the Bouquet in case of Edit
+        //get the details of the existing Bouquet in case of edit
         if(controller.getId() != NULL){
             
             this.bouquetRec = (Bouquet__c) controller.getRecord();       
@@ -130,7 +130,7 @@ public with sharing class BouquetBuilderExtController {
         String strQry = '';
         
         if(!isEdit){
-            
+        	
             //if new Bouquet then get all Flowers
             strQry = 'SELECT Id, Name, Family, IsActive, Color__c, Cost__c, HTML_Color_Code__c, Inventory_Remaining__c  FROM Product2';             
         }else{
@@ -155,7 +155,8 @@ public with sharing class BouquetBuilderExtController {
         
         for(Product2 flowerObj: Database.Query(strQry)){
         
-            //add to the list of Flowers if flower is Active or if flower is added to the existing Bouquet but is Inactive
+            // add to the list of Flowers if flower is Active OR 
+            // if flower is already added to the existing Bouquet but is Inactive
             if(flowerObj.IsActive  || (!flowerObj.IsActive && flowerObj.Blooms__r.size() > 0)){
                 
                 lstFlowers.add(flowerObj);  
@@ -169,7 +170,8 @@ public with sharing class BouquetBuilderExtController {
                 //for the Existing Bouquet if there are Blooms for the Flower
                 if(flowerObj.Blooms__r.size() > 0){
                     
-                    //if Bloom is not already in the Map for Chart the add.
+                    //if Bloom is not already in the Map for Chart, then add the bloom for the flower
+                    //For any bouquet, there is only one bloom for a given flower
                     if(!mapBloomForChart.containsKey(flowerObj.Id)){
                         
                         mapBloomForChart.put(flowerobj.Id,flowerObj.Blooms__r[0]);
@@ -193,6 +195,41 @@ public with sharing class BouquetBuilderExtController {
         populateFlowerWrapper();
         
     }
+    /**
+    *   @author         Developer 1
+    *   @description    return True if there is an error (blank quantity for a bloom) in the Flower table
+    *   @return         Boolean
+    *   @parameters     None
+    **/
+    private Boolean checkIsError(){
+    	Boolean isError = False;
+    	for(FlowerWrapper wrap :lstFlowerWrapper){
+    		if(wrap.Bloom.Quantity__c == NULL){
+    			isError = True;
+				wrap.Bloom.Quantity__c.addError('Please enter a value.');
+    		}
+    	}
+    	return isError;
+    }
+    /**
+    *   @author         Developer 1
+    *   @description    Method invoked (through action function) if the flower family is changed
+    *   @return         None
+    *   @parameters     None
+    **/
+    public void updateFlowersOnFamilyChange(){
+    	
+    	Boolean isError = checkIsError();
+    	if(isError){
+    		//revert back the previous selected flower family if any error found
+    		selectedFlowerFamily = prevSelectedFlowerFamily;
+    		showMessage('Please enter a value before changing the flower family.');
+    	}
+    	else{
+        	//fetch the new flowers for any family change
+        	fetchFlowers();
+        }
+    }
     
     /**
     *   @author         Developer 1
@@ -202,16 +239,23 @@ public with sharing class BouquetBuilderExtController {
     **/
     public void populateFlowerWrapper(){
         
-        //process the wrapper list
-        processFlowerWrapperList();
-        
+        //process the wrapper list if the list of wrapper is not blank
+        if(!lstFlowerWrapper.isEmpty()){
+        	processFlowerWrapperList();
+        }
+        // StandardSetController getRecords only fetches the records in the current page
+        // and does not retain the values user entered before across pagination
+        // update the flowerWrapperList to hold the user entered values
         for(sObject f: ssc.getRecords()){
             Product2 flowerObj = (Product2) f;
-                       
+            
+            // update the wrapper list if the current flower is already updated by User before
+            // current flower is already included in the save map            
             if(mapBloomToSave.containsKey(flowerObj.Id)){ 
             
                 lstFlowerWrapper.add(new FlowerWrapper(flowerObj, mapBloomToSave.get(flowerObj.Id)));     
             } 
+            // check if the current flower has an existing bloom
             else if(!flowerObj.Blooms__r.isEmpty()){
                 
                 Bloom__c blm = (Bloom__c) flowerObj.Blooms__r[0];
@@ -219,6 +263,7 @@ public with sharing class BouquetBuilderExtController {
                 FlowerWrapper wrapObj = new  FlowerWrapper(flowerObj, blm);
                 lstFlowerWrapper.add(wrapObj); 
             }
+            // if there is no existing bloom for the flower
             else{
                 
                 //for new Flower initialize the wrapper
@@ -237,53 +282,51 @@ public with sharing class BouquetBuilderExtController {
     **/    
     public void processFlowerWrapperList(){
         
-        if(!lstFlowerWrapper.isEmpty()){
-            
-            for(FlowerWrapper fw: lstFlowerWrapper){
+        for(FlowerWrapper fw: lstFlowerWrapper){
+            // process if the Quantity is greater than Zero
+            if(fw.bloom.Quantity__c > 0){
                 
-                if(fw.bloom.Quantity__c > 0){
+                //if the Quantity was changed from 0 to Non Zero then remove from the delete map first
+                if(mapBloomToDelete.containsKey(fw.flower.Id)){
+                    mapBloomToDelete.remove(fw.flower.Id);    
+                }
+                if(fw.bloom.Id == null){
+                    //add the new Bloom (to be created) to the save map
+                    Bloom__c newBloom = new Bloom__c(Quantity__c = fw.bloom.Quantity__c, Flower__c = fw.flower.Id);
+                    mapBloomToSave.put(fw.flower.Id, newBloom);
                     
-                    //if it the Quantity was changed from 0 to Non Zero then remove from the delete map first
-                    if(mapBloomToDelete.containsKey(fw.flower.Id)){
-                        mapBloomToDelete.remove(fw.flower.Id);    
-                    }
-                    if(fw.bloom.Id == null){
-                        //new Bloom to be created
-                        Bloom__c newBloom = new Bloom__c(Quantity__c = fw.bloom.Quantity__c, Flower__c = fw.flower.Id);
-                        mapBloomToSave.put(fw.flower.Id, newBloom);
-                        
-                         //add in the Map for the Chart
-                        mapBloomForChart.put(fw.flower.Id,newBloom);
-                    }else{                      
-                                           
-                        //bloom to be updated -- add in the map to Update    
-                        mapBloomToSave.put(fw.flower.Id, fw.bloom); 
-                        
-                        //add in the Map for the Chart
-                        mapBloomForChart.put(fw.flower.Id,fw.Bloom); 
-                                 
-                    }            
-                }else if(mapBloomToSave.containsKey(fw.flower.Id)){   
-                
-                    if(mapBloomToSave.get(fw.flower.Id).Id != null){
-                                      
-                        //Bloom to be deleted
-                        mapBloomToDelete.put(fw.bloom.Id, fw.bloom);
-                                                
-                    }else{
+                     //add in the Map for the Chart
+                    mapBloomForChart.put(fw.flower.Id,newBloom);
+                }else{                      
+                                       
+                    //bloom to be updated -- add in the map to Update    
+                    mapBloomToSave.put(fw.flower.Id, fw.bloom); 
                     
-                        //remove from the Map to be saved if the quantity was changed from non Zero to 0                                               
-                        mapBloomToSave.remove(fw.flower.Id);                      
-                    }
-                    
-                    //add in the Map for the Chart 
-                    mapBloomForChart.put(fw.flower.Id,fw.Bloom);     
-                }    
-            }
+                    //add in the Map for the Chart
+                    mapBloomForChart.put(fw.flower.Id,fw.Bloom); 
+                             
+                }            
+            }else if(mapBloomToSave.containsKey(fw.flower.Id)){
+            	//process if the Quantity is Zero   
             
-            //clear the current list of wrapper
-            lstFlowerWrapper.clear();
+                if(mapBloomToSave.get(fw.flower.Id).Id != null){
+                                  
+                    //Bloom to be deleted
+                    mapBloomToDelete.put(fw.bloom.Id, fw.bloom);
+                                            
+                }else{
+                
+                    //remove from the Map to be saved if the quantity was changed from non Zero to 0                                               
+                    mapBloomToSave.remove(fw.flower.Id);                      
+                }
+                
+                //add in the Map for the Chart 
+                mapBloomForChart.put(fw.flower.Id,fw.Bloom);     
+            }    
         }
+        
+        //clear the current list of wrapper
+        lstFlowerWrapper.clear();
     }
     
     /**
@@ -298,7 +341,11 @@ public with sharing class BouquetBuilderExtController {
         PageReference pg;
         List<Bloom__c> lstBloomsToUpsert = new List<Bloom__c>();
         Savepoint sp;
-        processFlowerWrapperList();
+        
+        // method to update the user inputs for the current page before hitting "Save" button
+        if(!lstFlowerWrapper.isEmpty()){
+        	processFlowerWrapperList();
+        }
         
         try{
             
@@ -313,6 +360,7 @@ public with sharing class BouquetBuilderExtController {
                 delete mapBloomToDelete.values();
             }
             
+            //populate the list of blooms to be updated/inserted
             if(!mapBloomToSave.isEmpty() ){
             
                 for(Bloom__c blm : mapBloomToSave.values()) {
@@ -373,8 +421,11 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/    
     public Pagereference next(){
-        ssc.next();
-        populateFlowerWrapper();
+    	//check if there is no error (no blank Quantity for the bloom)
+    	if(!checkIsError()){
+	        ssc.next();
+	        populateFlowerWrapper();
+    	}
         return null;
     }
     
@@ -386,8 +437,11 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/   
     public Pagereference previous(){
-        ssc.previous();
-        populateFlowerWrapper();
+    	//check if there is no error (no blank Quantity for the bloom)
+    	if(!checkIsError()){
+	        ssc.previous();
+	        populateFlowerWrapper();
+    	}
         return null;
     }
     
@@ -399,8 +453,11 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/    
     public Pagereference first(){
-        ssc.first();
-        populateFlowerWrapper();
+    	//check if there is no error (no blank Quantity for the bloom)
+        if(!checkIsError()){
+        	ssc.first();
+        	populateFlowerWrapper();
+        }
         return null;
     }
     
@@ -412,8 +469,11 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/    
     public Pagereference last(){
-        ssc.last();
-        populateFlowerWrapper();
+    	//check if there is no error (no blank Quantity for the bloom)
+        if(!checkIsError()){
+        	ssc.last();
+        	populateFlowerWrapper();
+        }
         return null;
     }
     
@@ -482,11 +542,12 @@ public with sharing class BouquetBuilderExtController {
                 totalCost += (bloomObj.Quantity__c * mapFlower.get(bloomObj.Flower__c).Cost__c);
                 
                 Product2 flowerRec = mapFlower.get(bloomObj.Flower__c);
+                //check if the flower color is not repeated for the chart
                 if(!mapChart.containsKey(flowerRec.Color__c)){
                 
                     mapChart.put(flowerRec.Color__c, new PieChartData(flowerRec.Color__c, bloomObj.Quantity__c ));    
                 }else{
-                
+                	//if the flower color is repeated, add the quantity for the same color
                     decimal qty = mapChart.get(flowerRec.Color__c).data + bloomObj.Quantity__c ;
                     mapChart.put(flowerRec.Color__c, new PieChartData(flowerRec.Color__c, qty  ));    
                 }
@@ -515,6 +576,7 @@ public with sharing class BouquetBuilderExtController {
                 }  
             }
         }
+        
         return c_data;
     }
     
@@ -536,13 +598,15 @@ public with sharing class BouquetBuilderExtController {
     //Inner class for the Pie Chart
     public class PieChartData{
         public String flowerColor{ get; set; }  
+        
         public Decimal data { get; set; }  
         
         // constructor of inner class
         public PieChartData(String flowerColor, Decimal data) {
+        	
             this.flowerColor = flowerColor;  
             this.data = data;  
         }// end of inner constructor
           
-    }  // end of warpper class
+    }  // end of wrapper class
 }

@@ -1,9 +1,9 @@
 <!--***************************************************************************************************************
 * Page Name       : BouquetBuilder
-* Description     : This page provides the end user a functionality to 
+* Description     : This page provides the below functionality to the end user (Florist) 
 *                   1> Create/Update Bouquet record
 *                   2> Create/Update/delete Bloom records
-*                   3> Shows the chart give the summary of Cost for each flower in the Bouquet
+*                   3> Shows the summary chart for each flower(by Quantity) in the Bouquet
 *                   This page will be invoked from the standard New and Edit button of Bouquet object 
 * Created By      : Developer 1 
 * Created Date    : 20-09-2016
@@ -46,29 +46,31 @@
                 
                 <apex:pageBlockSectionItem >
                     <apex:outputLabel >{!$ObjectType.Bouquet__c.fields.Deliver_To__c.Label}</apex:outputLabel>
-                    <apex:inputField value="{!bouquetRec.Deliver_To__c}" required="true" />
+                    <apex:inputField value="{!bouquetRec.Deliver_To__c}" required="true" style="width: 100%;"/>
                 </apex:pageBlockSectionItem>
                 
                 <apex:pageBlockSectionItem ></apex:pageBlockSectionItem>
                 
                 <apex:pageBlockSectionItem >
                     <apex:outputLabel >{!$ObjectType.Bouquet__c.fields.Message__c.Label}</apex:outputLabel>
-                    <apex:inputField value="{!bouquetRec.Message__c}" required="true"/>
+                    <apex:inputField value="{!bouquetRec.Message__c}" required="true" style="width: 100%;"/>
                 </apex:pageBlockSectionItem>
                 
             </apex:pageBlockSection>
             
-            <!--Summary Section -->
+            <!--Summary Chart Section -->
             <apex:pageBlockSection collapsible="false" title="Summary" columns="2" id="pbs_chart">
-            
+                
+                <!-- Show the message if there are no blooms in the Bouquet -->
                 <apex:pageBlockSectionItem >
                 
                     <apex:outputPanel rendered="{!chartData.size == 0}">
-                        <apex:pageMessage summary="No Flowers have been added to this Bouquet." severity="info" strength="3" />
+                        <apex:pageMessage summary="{!$Label.NoFlowersInBouquetMessage}" severity="info" strength="3" />
                     </apex:outputPanel> 
                     
                 </apex:pageBlockSectionItem>
                 
+                <!-- Show the Total Cost of the Bouquet -->
                 <apex:pageBlockSectionItem >
                 
                     <apex:outputLabel value="Total Cost"></apex:outputLabel>
@@ -79,10 +81,10 @@
                     
                 </apex:pageBlockSectionItem>
                 
+                <!-- Show the Pie chart of blooms (by Quantity) in the Bouquet -->
                 <apex:pageBlockSectionItem >
                 
                     <apex:outputPanel rendered="{!chartData.size > 0}">
-                    
                         <apex:chart data="{!ChartData}" height="200" width="600" >
                         
                             <apex:legend position="right"/>
@@ -102,7 +104,7 @@
 
             <!--Flowers Section -->
             <!------------------- Start of Action Region, so that pagination and filtering -------->
-            <!--------------------can even done if the required Bouquet fields are empty   ----->
+            <!--------------------can be done even if the required Bouquet fields are empty   ----->
             <apex:actionRegion >
                 <!-- Section to show the List of available Flowers -->
                 <apex:pageBlockSection collapsible="false" title="Flowers" columns="1" id="pbs_flowers">
@@ -111,7 +113,7 @@
                     
                             <apex:outputLabel >{!$ObjectType.Product2.fields.Family.Label}</apex:outputLabel>                            
                             
-                            <!-- OnChange of the Filter call the Action function to filter the Flowers List -->
+                            <!-- Call the action function to filter the flowers list OnChange of the flower Family filter -->
                             <apex:selectList value="{!selectedFlowerFamily}" multiselect="false" size="1" onchange="updateFlowersFunc(); return false;">
                                 <apex:selectOptions value="{!FlowerFamilyOptions}" />
                             </apex:selectList>
@@ -124,8 +126,13 @@
                         <apex:pageBlockTable value="{!lstFlowerWrapper}" var="wrapObj" columnsWidth="1%,20%,10%,20%,15%,20%,10%">
                             
                             <apex:column headerValue="{!$ObjectType.Bloom__c.fields.Quantity__c.Label}"> 
-                            
-                                <apex:inputField value="{!wrapObj.bloom.Quantity__c}" required="true"/>
+                            	<!-- NOTE: Not used the required attribute of inputfield Quantity
+                            	     As, we had to retain the old selected family in the filter
+                            	     for any error (blank values in the Quantity) -->
+                                <div class="requiredInput">
+                                <div class="requiredBlock"></div>
+                                    <apex:inputField value="{!wrapObj.bloom.Quantity__c}" />
+                                </div>
                                 
                             </apex:column>  
                             
@@ -180,14 +187,15 @@
                         
                     </apex:outputPanel>    
                     
-                    <!-- Render if no flowers found for the selected Flower Family -->
-                    <apex:outputLabel rendered="{!lstFlowerWrapper.size == 0}" value="No Flowers were found for this family."/>
-                            
+                    <!-- Show the message if no flowers found for the selected Flower Family -->
+                    <apex:outputPanel rendered="{!lstFlowerWrapper.size == 0}">
+                        <apex:pageMessage summary="{!$Label.NoFlowersinFamily}" severity="info" strength="3" />
+                    </apex:outputPanel> 
                     
                 </apex:pageBlockSection>           
                 
                 <!------------------- Action function when Flower Family is changed  ------------------------->
-                <apex:actionFunction name="updateFlowersFunc" action="{!fetchFlowers}"  rerender="pbs_flowers, pbs_chart" status="loadingAnimation"  />
+                <apex:actionFunction name="updateFlowersFunc" action="{!updateFlowersOnFamilyChange}"  rerender="pbs_flowers, pbs_chart" status="loadingAnimation" />
             
             </apex:actionRegion>
             

@@ -10,9 +10,26 @@
     </labels>
     <labels>
         <fullName>CustomerFieldId</fullName>
+        <categories>bouquetbuilder</categories>
         <language>en_US</language>
         <protected>true</protected>
         <shortDescription>CustomerFieldId</shortDescription>
         <value>CF00N2800000Ep576_lkid</value>
+    </labels>
+    <labels>
+        <fullName>NoFlowersInBouquetMessage</fullName>
+        <categories>bouquetbuilder</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>NoFlowersInBouquetMessage</shortDescription>
+        <value>No Flowers have been added to this Bouquet.</value>
+    </labels>
+    <labels>
+        <fullName>NoFlowersinFamily</fullName>
+        <categories>bouquetbuilder</categories>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>NoFlowersinFamily</shortDescription>
+        <value>No Flowers were found for this family.</value>
     </labels>
 </CustomLabels>
