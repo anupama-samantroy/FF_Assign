@@ -13,55 +13,22 @@ private class BloomTriggerHelperTest{
     
     @testSetup
     static void setupData(){
-        
-        // creating a user of profile Florist 
-        Id profileId = [SELECT ID FROM Profile WHERE Name = 'Florist' LIMIT 1].id;
-        
-        
-        User floristUser = new User (Alias = 'testUser', Email = 'test@bb.com.test', EmailEncodingKey='UTF-8', 
-                               LastName= 'lastName', LanguageLocaleKey='en_US', LocaleSidKey='en_US', 
-                               ProfileId = profileId, TimeZoneSidKey='America/Los_Angeles', 
-                               // make sure user are created with unique username
-                               UserName='test@bb' + string.valueOf(system.now().getTime())+ '.com.test');
+    
+        User floristUser = TestUtilities.createFloristUser();
         insert floristUser;
-        
-        //Create the Account
-        Account acc = new Account(Name = 'Test Account');
-        insert acc;
         
         //Create the Customer Records
         List<Lead> lstCustomers = new List<Lead>();
         for(Integer i = 0 ; i < 5 ; i ++){
         
-            Lead testLead1 = new Lead(FirstName = 'John'+i, LastName = 'Cena'+i, Company = acc.id);
+            Lead testLead1 = new Lead(FirstName = 'John'+i, LastName = 'Cena'+i, Company = 'WWE');
            
             lstCustomers.add(testLead1);
         }      
         insert lstCustomers;
         
         //create Flower records
-        List<Product2> lstFlowers = new List<Product2>();
-        
-        Product2 flower1 = new Product2(Name = 'Flower1', Family = 'Family1', Color__c = 'Blue', Initial_Inventory__c = 100);
-        Product2 flower2 = new Product2(Name = 'Flower2', Family = 'Family2', Color__c = 'Green', Initial_Inventory__c = 100); 
-        Product2 flower3 = new Product2(Name = 'Flower3', Family = 'Family3', Color__c = 'Orange', Initial_Inventory__c = 100);         
-        Product2 flower4 = new Product2(Name = 'Flower4', Family = 'Family4', Color__c = 'Red', Initial_Inventory__c = 100); 
-        Product2 flower5 = new Product2(Name = 'Flower5', Family = 'Family5', Color__c = 'Yellow', Initial_Inventory__c = 100); 
-        Product2 flower6 = new Product2(Name = 'Flower6', Family = 'Family6', Color__c = 'Blue', Initial_Inventory__c = 100);
-        Product2 flower7 = new Product2(Name = 'Flower7', Family = 'Family7', Color__c = 'Green', Initial_Inventory__c = 100); 
-        Product2 flower8 = new Product2(Name = 'Flower8', Family = 'Family8', Color__c = 'Orange', Initial_Inventory__c = 100);         
-        Product2 flower9 = new Product2(Name = 'Flower9', Family = 'Family9', Color__c = 'Red', Initial_Inventory__c = 100); 
-        Product2 flower10 = new Product2(Name = 'Flower10', Family = 'Family10', Color__c = 'Yellow', Initial_Inventory__c = 100);
-        lstFlowers.add(flower1);
-        lstFlowers.add(flower2); 
-        lstFlowers.add(flower3); 
-        lstFlowers.add(flower4);    
-        lstFlowers.add(flower5);    
-        lstFlowers.add(flower6);
-        lstFlowers.add(flower7); 
-        lstFlowers.add(flower8); 
-        lstFlowers.add(flower9);    
-        lstFlowers.add(flower10); 
+        List<Product2> lstFlowers = TestUtilities.createFlowers();
         insert lstFlowers;
         
         
@@ -105,17 +72,18 @@ private class BloomTriggerHelperTest{
             //For the Red color flower add quantity 20 -- There are 2 Red Flowers
             if(flower.Color__c == 'Red'){
                               
-                lstBlooms.add(createBloom(bouquet.Id,flower.Id, 20));
+                lstBlooms.add(TestUtilities.createBloom(bouquet.Id,flower.Id, 20));
                 
             } else{    //for others add 10      
                 
-                lstBlooms.add(createBloom(bouquet.Id,flower.Id, 10));   
+                lstBlooms.add(TestUtilities.createBloom(bouquet.Id,flower.Id, 10));   
             }  
         }          
         
         //Check that the Most Used Color for the Customer is Blank before creating blooms.
         system.assert(String.isBlank(customer.Most_Used_Color__c));
         
+        test.startTest();
         //Running as a FLORIST user.
         System.runAs(floristUser){
         
@@ -128,7 +96,7 @@ private class BloomTriggerHelperTest{
         
         system.assertEquals('Red', customer.Most_Used_Color__c );
         
-        //Running as a FLORIST user.
+        //Running as a FLORIST user changing the Quantity of the Orange Flower
         System.runAs(floristUser){
         
             //Change the Quantity of the Bloom for the Orange Flower
@@ -167,10 +135,16 @@ private class BloomTriggerHelperTest{
         customer = [SELECT Id, Most_Used_Color__c FROM Lead WHERE LastName = 'Cena1' LIMIT 1];
         
         system.assertEquals('Green', customer.Most_Used_Color__c ); 
+        
+        test.stopTest();
     }
     
+    /*
+        This method is to test the most used color of the flower on the Customer Record in Bulk
+    */
     @isTest
     static void TestMostUsedColorForBulkCustomers(){
+        
         //get the Florist User
         User floristUser = [SELECT ID FROM User WHERE Email= 'test@bb.com.test' LIMIT 1];
         
@@ -208,15 +182,15 @@ private class BloomTriggerHelperTest{
             if(flower.Color__c == 'Red'){
             
                 //first bouquet
-                lstBlooms.add(createBloom(bouquetCustomer1[0].Id,flower.Id, 20));
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[0].Id,flower.Id, 20));
                 //second bouquet
-                lstBlooms.add(createBloom(bouquetCustomer1[1].Id,flower.Id, 10)); 
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[1].Id,flower.Id, 10)); 
             } else{    //for others add 10
             
                 //first Bouquet
-                lstBlooms.add(createBloom(bouquetCustomer1[0].Id,flower.Id, 10)); 
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[0].Id,flower.Id, 10)); 
                 //second Bouquet
-                lstBlooms.add(createBloom(bouquetCustomer1[1].Id,flower.Id, 10));   
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[1].Id,flower.Id, 10));   
             }  
         }
         
@@ -234,15 +208,15 @@ private class BloomTriggerHelperTest{
             if(flower.Color__c == 'Blue'){
                 
                 //first Bouquet
-                lstBlooms.add(createBloom(bouquetCustomer2[0].Id,flower.Id, 20));                
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer2[0].Id,flower.Id, 20));                
                 //second Bouquet
-                lstBlooms.add(createBloom(bouquetCustomer2[1].Id,flower.Id, 10)); 
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer2[1].Id,flower.Id, 10)); 
             } else{    //for others add 10
             
                 //first Bouquet
-                lstBlooms.add(createBloom(bouquetCustomer2[0].Id,flower.Id, 10));                
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer2[0].Id,flower.Id, 10));                
                 //second Bouquet
-                lstBlooms.add(createBloom(bouquetCustomer2[1].Id,flower.Id, 10));   
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer2[1].Id,flower.Id, 10));   
             }  
         }        
         //check that 20 more blooms have been added to the List and size is now 40
@@ -251,6 +225,8 @@ private class BloomTriggerHelperTest{
         //Check that the Most Used Color for the Customer is Blank before creating blooms.
         system.assert(String.isBlank(lstCustomer[0].Most_Used_Color__c));
         system.assert(String.isBlank(lstCustomer[1].Most_Used_Color__c));
+        
+        test.startTest();
         
         //Running as a FLORIST user.
         System.runAs(floristUser){
@@ -268,14 +244,120 @@ private class BloomTriggerHelperTest{
         customer = [SELECT Id, Most_Used_Color__c FROM Lead WHERE LastName = 'Cena1' LIMIT 1];
         system.assertEquals('Blue', customer.Most_Used_Color__c );
         
+        test.stopTest();
     }
     
+    /*
+        This method is to test the Flower Inventory when Blooms are added to the Bouquet
+    */
     @isTest
-    static void TestFlowerInventory(){
-    }
+    static void TestFlowerInventoryUsed(){
+        //get the Florist User
+        User floristUser = [SELECT ID FROM User WHERE Email= 'test@bb.com.test' LIMIT 1];
+        
+        //get the List of Customers 
+        List<Lead> lstCustomer = [SELECT Id, Most_Used_Color__c FROM Lead];
+        system.assertEquals(5, lstCustomer.size());
+        
+        //get the Bouquet records
+        List<Bouquet__c> lstBouquet = [SELECT Id, Customer__c FROM Bouquet__c WHERE Customer__c IN:lstCustomer];        
+        system.assertEquals(10, lstBouquet.size());
+        
+        //prepare a map to hold the List of Bouquet for each customer
+        Map<Id,List<Bouquet__c>> mapBouquetVsCustomer = new Map<Id,List<Bouquet__c>>();
+        for(Bouquet__c bou: lstBouquet ){
+            if(!mapBouquetVsCustomer.containsKey(bou.Customer__c)){
+                mapBouquetVsCustomer.put(bou.Customer__c, new List<Bouquet__c>());    
+            }
+            mapBouquetVsCustomer.get(bou.Customer__c).add(bou);    
+        }
+        
+        //Get the flowers Order by Flower Color i.e Blue, Green, Orange, Red, Yellow
+        List<Product2> lstFlowers = [SELECT Id, Color__c, Inventory_Remaining__c FROM Product2 ORDER BY Color__c];
+        system.assertEquals(10, lstFlowers.size());
+        
+        //check that the Initial Inventory remaning is 100 for any flower
+        system.assertEquals(100, lstFlowers[0].Inventory_Remaining__c );
+        system.assertEquals(100, lstFlowers[3].Inventory_Remaining__c );
+        system.assertEquals(100, lstFlowers[7].Inventory_Remaining__c );
+                
+        //add multiple Blooms to this bouquet
+        List<Bloom__c> lstBlooms = new List<Bloom__c>();
+        
+        //get the Bouquets for the First Customer
+        List<Bouquet__c> bouquetCustomer1 = mapBouquetVsCustomer.get(lstCustomer[0].Id);
+        system.assertEquals(2,bouquetCustomer1.size());
+        
+        /*****Adding Blooms to the Bouquets of First Customer ***/
+        for(Product2 flower : lstFlowers){
+            
+            //For the Red color flower add quantity 20 in the first Bouquet and 10 in the second bouquet
+            if(flower.Color__c == 'Red'){
+            
+                //first bouquet
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[0].Id,flower.Id, 20));
+                //second bouquet
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[1].Id,flower.Id, 10)); 
+            } else{    //for others add 10
+            
+                //first Bouquet
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[0].Id,flower.Id, 10)); 
+                //second Bouquet
+                lstBlooms.add(TestUtilities.createBloom(bouquetCustomer1[1].Id,flower.Id, 10));   
+            }  
+        }
+        
+        test.startTest();
+        //Running as a FLORIST user.
+        System.runAs(floristUser){
+        
+            //insert the Blooms
+            insert lstBlooms;
+        }
+        
+        //For Customer 1 Red flower has quantity 30 for each of the red flowers. So the Inventory Remaining  will be 70 for each red flower
+        List<Product2> redFlowers = [SELECT Id,Inventory_Remaining__c  FROM Product2 WHERE Color__c = 'Red' LIMIT 2];
+             
+        system.assertEquals(70, redFlowers[0].Inventory_Remaining__c );
+        system.assertEquals(70, redFlowers[1].Inventory_Remaining__c );
+        
+        //For Customer 1 Green flower has quantity 20 for each of the green flowers. So the Inventory Remaining  will be 80 for each green flower
+        List<Product2> greenFlowers = [SELECT Id,Inventory_Remaining__c  FROM Product2 WHERE Color__c = 'Green' LIMIT 2];
+        system.assertEquals(80, greenFlowers[0].Inventory_Remaining__c );
+        system.assertEquals(80, greenFlowers[1].Inventory_Remaining__c );
+        
+        
+        //Update the Blooms
+        List<Bloom__c> bloomToupdate = new List<Bloom__c>();
+        for(Bloom__c blm: [SELECT Id, Quantity__c, Flower__r.Color__c FROM Bloom__c]){
+            if(blm.Flower__r.Color__c == 'Red'){
+                //decrese the Quantity by 5
+                blm.Quantity__c = blm.Quantity__c  - 5;
+            }
+            if(blm.Flower__r.Color__c == 'Green'){
+                //Increase the Quantity by 5
+                blm.Quantity__c = blm.Quantity__c  + 5;
+            }
+            bloomToupdate.add(blm);
+        }
+        //Running as a FLORIST user.
+        System.runAs(floristUser){
+        
+            //insert the Blooms
+            update bloomToupdate;
+        }
+        //For Customer 1 Red flower has now quantity 20 for each of the red flowers. So the Inventory Remaining  will be 80 for each red flower
+        redFlowers = [SELECT Id,Inventory_Remaining__c  FROM Product2 WHERE Color__c = 'Red' LIMIT 2];
+             
+        system.assertEquals(80, redFlowers[0].Inventory_Remaining__c );
+        system.assertEquals(80, redFlowers[1].Inventory_Remaining__c );
+        
+        //For Customer 1 Green flower has quantity 30 for each of the green flowers. So the Inventory Remaining  will be 70 for each green flower
+        greenFlowers = [SELECT Id,Inventory_Remaining__c  FROM Product2 WHERE Color__c = 'Green' LIMIT 2];
+        system.assertEquals(70, greenFlowers[0].Inventory_Remaining__c );
+        system.assertEquals(70, greenFlowers[1].Inventory_Remaining__c );
+        
+        test.stopTest();
+    }    
     
-    private static Bloom__c createBloom(Id BouquetId, Id flowerId, Integer Quantity){
-        Bloom__c blm = new Bloom__c(Bouquet__c = BouquetId, Flower__c = flowerId, Quantity__c =  Quantity);
-        return blm;
-    }
 }
