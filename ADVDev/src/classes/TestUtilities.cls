@@ -70,4 +70,43 @@ Public class TestUtilities{
         Bloom__c blm = new Bloom__c(Bouquet__c = BouquetId, Flower__c = flowerId, Quantity__c =  Quantity);
         return blm;
     }
+    
+    public static List<Product2> createFlowersForPage(){
+        //create Flower records
+        List<Product2> lstFlowers = new List<Product2>();
+        
+        Product2 flower1 = new Product2(Name = 'Flower1', Family = 'Family1', Color__c = 'Blue', Initial_Inventory__c = 100, Cost__c = 1);
+        Product2 flower2 = new Product2(Name = 'Flower2', Family = 'Family1', Color__c = 'Green', Initial_Inventory__c = 100, Cost__c = 1); 
+        Product2 flower3 = new Product2(Name = 'Flower3', Family = 'Family1', Color__c = 'Orange', Initial_Inventory__c = 100, Cost__c = 1);         
+        Product2 flower4 = new Product2(Name = 'Flower4', Family = 'Family1', Color__c = 'Red', Initial_Inventory__c = 100, Cost__c = 1); 
+        Product2 flower5 = new Product2(Name = 'Flower5', Family = 'Family1', Color__c = 'Yellow', Initial_Inventory__c = 100, Cost__c = 1); 
+        Product2 flower6 = new Product2(Name = 'Flower6', Family = 'Family2', Color__c = 'Blue', Initial_Inventory__c = 100, Cost__c = 2);
+        Product2 flower7 = new Product2(Name = 'Flower7', Family = 'Family2', Color__c = 'Green', Initial_Inventory__c = 100, Cost__c = 2); 
+        Product2 flower8 = new Product2(Name = 'Flower8', Family = 'Family2', Color__c = 'Orange', Initial_Inventory__c = 100, Cost__c = 2);         
+        Product2 flower9 = new Product2(Name = 'Flower9', Family = 'Family2', Color__c = 'Red', Initial_Inventory__c = 100, Cost__c = 2); 
+        Product2 flower10 = new Product2(Name = 'Flower10', Family ='Family2', Color__c = 'Yellow', Initial_Inventory__c = 100, Cost__c = 2);
+        Product2 flower11 = new Product2(Name = 'Flower11', Family ='Family3', Color__c = 'Blue', Initial_Inventory__c = 100, Cost__c = 3);
+        Product2 flower12 = new Product2(Name = 'Flower12', Family ='Family3', Color__c = 'Green', Initial_Inventory__c = 100, Cost__c = 3);
+        Product2 flower13 = new Product2(Name = 'Flower13', Family ='Family3', Color__c = 'Orange', Initial_Inventory__c = 100, Cost__c = 3);
+        Product2 flower14 = new Product2(Name = 'Flower14', Family ='Family3', Color__c = 'Red', Initial_Inventory__c = 100, Cost__c = 3);
+        Product2 flower15 = new Product2(Name = 'Flower15', Family ='Family3', Color__c = 'Yellow', Initial_Inventory__c = 100, Cost__c = 3);
+        Product2 flower16 = new Product2(Name = 'Flower16', Family ='Family3', Color__c = 'Green', Initial_Inventory__c = 100, Cost__c = 3);
+        lstFlowers.add(flower1);
+        lstFlowers.add(flower2); 
+        lstFlowers.add(flower3); 
+        lstFlowers.add(flower4);    
+        lstFlowers.add(flower5);    
+        lstFlowers.add(flower6);
+        lstFlowers.add(flower7); 
+        lstFlowers.add(flower8); 
+        lstFlowers.add(flower9);    
+        lstFlowers.add(flower10);
+        lstFlowers.add(flower11);
+        lstFlowers.add(flower12);
+        lstFlowers.add(flower13);
+        lstFlowers.add(flower14);
+        lstFlowers.add(flower15); 
+        lstFlowers.add(flower16); 
+        return lstFlowers;    
+    }
 }
