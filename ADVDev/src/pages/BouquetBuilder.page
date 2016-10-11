@@ -6,12 +6,12 @@
 *                   3> Shows the summary chart for each flower(by Quantity) in the Bouquet
 *                   This page will be invoked from the standard New and Edit button of Bouquet object 
 * Created By      : Developer 1 
-* Created Date    : 20-09-2016
+* Created Date    : 08-10-2016
 * Modification Log:  
 * -----------------------------------------------------------------------------------------------------------------
 * Developer                Date                 Modification ID        Description 
 * -----------------------------------------------------------------------------------------------------------------
-* Developer 1              20-09-2016           1000                   Initial Version
+* Developer 1              08-10-2016           1000                   Initial Version
 */ 
 *******************************************************************************************************************-->
 <apex:page standardController="Bouquet__c" extensions="BouquetBuilderExtController" sidebar="false">
@@ -44,18 +44,15 @@
                 
                 <apex:inputField value="{!bouquetRec.Delivery_Date__c}" required="true"/>
                 
-                <apex:pageBlockSectionItem >
-                    <apex:outputLabel >{!$ObjectType.Bouquet__c.fields.Deliver_To__c.Label}</apex:outputLabel>
-                    <apex:inputField value="{!bouquetRec.Deliver_To__c}" required="true" style="width: 100%;"/>
-                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <!-- Moved the next two fields to their own pageblocksection, so they can span full width -->
+            <apex:pageBlockSection columns="1">
                 
-                <apex:pageBlockSectionItem ></apex:pageBlockSectionItem>
+                <apex:inputField value="{!bouquetRec.Deliver_To__c}" required="true" style="width:70%" />
                 
-                <apex:pageBlockSectionItem >
-                    <apex:outputLabel >{!$ObjectType.Bouquet__c.fields.Message__c.Label}</apex:outputLabel>
-                    <apex:inputField value="{!bouquetRec.Message__c}" required="true" style="width: 100%;"/>
-                </apex:pageBlockSectionItem>
-                
+                <apex:inputField value="{!bouquetRec.Message__c}" required="true" style="width:70%"/>
+
             </apex:pageBlockSection>
             
             <!--Summary Chart Section -->
@@ -65,7 +62,7 @@
                 <apex:pageBlockSectionItem >
                 
                     <apex:outputPanel rendered="{!chartData.size == 0}">
-                        <apex:pageMessage summary="{!$Label.NoFlowersInBouquetMessage}" severity="info" strength="3" />
+                        <apex:pageMessage summary="{!$Label.NoFlowersInBouquetMessage}" severity="info" strength="0" />
                     </apex:outputPanel> 
                     
                 </apex:pageBlockSectionItem>
@@ -82,9 +79,9 @@
                 </apex:pageBlockSectionItem>
                 
                 <!-- Show the Pie chart of blooms (by Quantity) in the Bouquet -->
-                <apex:pageBlockSectionItem >               
+                <apex:pageBlockSectionItem >                
                     
-                        <apex:chart data="{!ChartData}" height="200" width="600" >
+                        <apex:chart data="{!ChartData}" height="250" width="600" >
                         
                             <apex:legend position="right"/>
                             
@@ -94,7 +91,7 @@
                                 
                             </apex:pieSeries>
                             
-                        </apex:chart>    
+                        </apex:chart>                   
                                   
                 </apex:pageBlockSectionItem>   
                              
@@ -124,13 +121,12 @@
                         <apex:pageBlockTable value="{!lstFlowerWrapper}" var="wrapObj" columnsWidth="1%,20%,10%,20%,15%,20%,10%">
                             
                             <apex:column headerValue="{!$ObjectType.Bloom__c.fields.Quantity__c.Label}"> 
-                            	<!-- NOTE: Not used the required attribute of inputfield Quantity
-                            	     As, we had to retain the old selected family in the filter
-                            	     for any error (blank values in the Quantity) -->
-                                <div class="requiredInput">
-                                <div class="requiredBlock"></div>
-                                    <apex:inputField value="{!wrapObj.bloom.Quantity__c}" />
-                                </div>
+                            <!-- NOTE: Using the required attribute of the Quantity Field to restrict user to Save the Bouquet without Quantity and show the Error Msgs(Figure 11)
+                                       However this comes with a trade off that when the user tries to change the flower family without filling the quantity
+                                       though the flowers are not filtered, the family is changed. If I do the validation from backend for Quantity then Error
+                                       msgs as per Figure 11 could not be possible.
+                            -->    
+                                    <apex:inputField value="{!wrapObj.bloom.Quantity__c}" required="true" />
                                 
                             </apex:column>  
                             
@@ -187,13 +183,13 @@
                     
                     <!-- Show the message if no flowers found for the selected Flower Family -->
                     <apex:outputPanel rendered="{!lstFlowerWrapper.size == 0}">
-                        <apex:pageMessage summary="{!$Label.NoFlowersinFamily}" severity="info" strength="3" />
+                        <apex:pageMessage summary="{!$Label.NoFlowersinFamily}" severity="info" strength="0" />
                     </apex:outputPanel> 
                     
                 </apex:pageBlockSection>           
                 
                 <!------------------- Action function when Flower Family is changed  ------------------------->
-                <apex:actionFunction name="updateFlowersFunc" action="{!updateFlowersOnFamilyChange}"  rerender="pbs_flowers, pbs_chart" status="loadingAnimation" />
+                <apex:actionFunction name="updateFlowersFunc" action="{!fetchFlowers}"  rerender="pbs_flowers, pbs_chart, pm_msg" status="loadingAnimation" />
             
             </apex:actionRegion>
             

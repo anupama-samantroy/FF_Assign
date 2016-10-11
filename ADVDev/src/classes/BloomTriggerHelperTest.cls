@@ -18,13 +18,7 @@ private class BloomTriggerHelperTest{
         insert floristUser;
         
         //Create the Customer Records
-        List<Lead> lstCustomers = new List<Lead>();
-        for(Integer i = 0 ; i < 5 ; i ++){
-        
-            Lead testLead1 = new Lead(FirstName = 'John'+i, LastName = 'Cena'+i, Company = 'WWE');
-           
-            lstCustomers.add(testLead1);
-        }      
+        List<Lead> lstCustomers = TestUtilities.createCustomers();            
         insert lstCustomers;
         
         //create Flower records
@@ -91,10 +85,14 @@ private class BloomTriggerHelperTest{
             insert lstBlooms;
         }
         
+        //check the size of the Blooms
+        List<Bloom__c> lstBloomsInserted = [SELECT Id, Quantity__c FROM Bloom__c];
+        System.assertEquals(10, lstBloomsInserted.size(),'1 Bloom for each of the Flowers.');
+        
         //as the Bloom for Red Flower the quantity is 40 the most used color should be Red for the Customer
         customer = [SELECT Id, Most_Used_Color__c FROM Lead WHERE LastName = 'Cena1' LIMIT 1];
         
-        system.assertEquals('Red', customer.Most_Used_Color__c );
+        system.assertEquals('Red', customer.Most_Used_Color__c,'as the Bloom for Red Flower the quantity is 40 the most used color should be Red for the Customer' );
         
         //Running as a FLORIST user changing the Quantity of the Orange Flower
         System.runAs(floristUser){
@@ -114,7 +112,7 @@ private class BloomTriggerHelperTest{
         //as the Quantity for Orange Flower is 40, the most used color should be updated to Orange
         customer = [SELECT Id, Most_Used_Color__c FROM Lead WHERE LastName = 'Cena1' LIMIT 1];
         
-        system.assertEquals('Orange', customer.Most_Used_Color__c ); 
+        system.assertEquals('Orange', customer.Most_Used_Color__c,'The Quantity for Orange and Red Bloom are 40. But as Orange is alphabetically first.The most used color will be Orange' ); 
         
         //Running as a FLORIST user.
         System.runAs(floristUser){
@@ -133,8 +131,14 @@ private class BloomTriggerHelperTest{
         //as it comes alphabetically first.
         
         customer = [SELECT Id, Most_Used_Color__c FROM Lead WHERE LastName = 'Cena1' LIMIT 1];
+        List<AggregateResult> lstAgg = [SELECT Flower__r.Color__c color,SUM(Quantity__c) tot FROM Bloom__c GROUP BY Flower__r.Color__c];
+        Map<String, Decimal> mapQty = new Map<String, Decimal>();
         
-        system.assertEquals('Green', customer.Most_Used_Color__c ); 
+        for(AggregateResult agg: lstAgg){
+            mapQty.put((String) agg.get('color'), (Decimal) agg.get('tot'));
+        }
+        System.assertEquals(mapQty.get('Orange'),mapQty.get('Green'));
+        system.assertEquals('Green', customer.Most_Used_Color__c,'The Quantity for Green and Orange Bloom are 40. But as Green is alphabetically first.The most used color will be Green' ); 
         
         test.stopTest();
     }

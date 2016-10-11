@@ -18,7 +18,7 @@ private class BouquetBuilderTest{
         insert floristUser;
         
         //Create the Customer Record
-        Lead testLead = new Lead(FirstName = 'John', LastName = 'Cena', Company = 'WWE');           
+        Lead testLead = TestUtilities.createCustomers()[0] ;           
         insert testLead ;
         
         //create Flower records
@@ -43,7 +43,7 @@ private class BouquetBuilderTest{
         User floristUser = [SELECT ID FROM User WHERE Email= 'test@bb.com.test' LIMIT 1];
         
         //get the Customer
-        Lead cust = [SELECT Id FROM Lead WHERE LastName = 'Cena' LIMIT 1];
+        Lead cust = [SELECT Id FROM Lead WHERE LastName = 'Cena0' LIMIT 1];
         
         Test.startTest();
             System.runAs(floristUser){               
@@ -72,38 +72,21 @@ private class BouquetBuilderTest{
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = NULL;
                 //change the Family filter
                 extCtrl.selectedFlowerFamily = 'Family1';
-                extCtrl.updateFlowersOnFamilyChange();
-                
-                ApexPages.Message[] pageMsgs = ApexPages.getMessages();
-                System.assertNotEquals(0,pageMsgs.size());
                                 
-                //check that the error for Quantity null is on the page
-                Boolean msgFound = false;
-                for( ApexPages.Message msg : pageMsgs){
-                    if(msg.getSummary() == 'Please enter a value before changing the flower family.'
-                        && msg.getSeverity() == ApexPages.Severity.Error)
-                    {
-                        msgFound = true;    
-                    }
-                }
-                
-                //check that there should be a message
-                System.assert(msgFound);
-                
                 //Make the Quantity of first flower as Zero
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 0;
                 
                 //Now select a Family for which there are no Flowers
                 //change the Family filter
                 extCtrl.selectedFlowerFamily = 'No Family';
-                extCtrl.updateFlowersOnFamilyChange();
+                extCtrl.fetchFlowers();
                 
                 //check that the List of Flowers is 0
                 System.assert(extCtrl.lstFlowerWrapper.size() == 0);
                 
                 //Now change the Flower Family to 'Family3'
                 extCtrl.selectedFlowerFamily = 'Family3';
-                extCtrl.updateFlowersOnFamilyChange();
+                extCtrl.fetchFlowers();
                 
                 //check that the List of Flowers is 5
                 System.assert(extCtrl.lstFlowerWrapper.size() == 5);
@@ -142,18 +125,20 @@ private class BouquetBuilderTest{
                 //fill the flower details
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 10;
                 extCtrl.lstFlowerWrapper[1].Bloom.Quantity__c = 10;
-                extCtrl.last();                         
+                extCtrl.last();          
+                               
                 // get the chart details
                 extCtrl.getChartData();
                 System.assertEquals(60,extCtrl.totalCost);
                  
                 //Now change the Flower Family to 'Family1'
                 extCtrl.selectedFlowerFamily = 'Family1';
-                extCtrl.updateFlowersOnFamilyChange(); 
+                extCtrl.fetchFlowers(); 
+                
                 //fill the flower details
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 10;
                 
-                extCtrl.updateFlowersOnFamilyChange();
+                extCtrl.fetchFlowers();
                 extCtrl.getChartData();
                 //check the total cost 
                 System.assertEquals(70,extCtrl.totalCost);
@@ -175,7 +160,7 @@ private class BouquetBuilderTest{
         User floristUser = [SELECT ID FROM User WHERE Email= 'test@bb.com.test' LIMIT 1];
         
         //get the Customer
-        Lead cust = [SELECT Id FROM Lead WHERE LastName = 'Cena' LIMIT 1];
+        Lead cust = [SELECT Id FROM Lead WHERE LastName = 'Cena0' LIMIT 1];
         
         Test.startTest();
             System.runAs(floristUser){               
@@ -187,13 +172,16 @@ private class BouquetBuilderTest{
                 BouquetBuilderExtController extCtrl = new BouquetBuilderExtController (stdCtrl);
                 
                 //check that on Load there were 5 flowers Shown  
-                System.assert(extCtrl.lstFlowerWrapper.size() == 5);
+                System.assert(extCtrl.lstFlowerWrapper.size() == 5, 'As the pagination size is 5');
+                
                 //check that the Chart is not Shown
-                System.assert(extCtrl.mapBloomForChart .size() == 0);
+                System.assert(extCtrl.mapBloomForChart .size() == 0, 'As no flowers have been added');
+                
                 //check that the selected Family is null
-                System.assert(extCtrl.selectedFlowerFamily == NULL);
+                System.assert(extCtrl.selectedFlowerFamily == NULL, 'Default is --Any Type--');
+                
                 //check the number of pages in the Flowers Section should be 4 as 16 flowers
-                System.assertEquals('4',extCtrl.getTotalResuts());
+                System.assertEquals('4',extCtrl.getTotalResuts(),'There are 16 flowers, 5 each on 3 pages and 1 on the last Page. So total 4 pages');
                
                 
                 //testing get Flower Family Options Method
@@ -202,11 +190,11 @@ private class BouquetBuilderTest{
                    
                 //Now change the Flower Family to 'Family3'
                 extCtrl.selectedFlowerFamily = 'Family3';
-                extCtrl.updateFlowersOnFamilyChange();
+                extCtrl.fetchFlowers();
                 
                 //check that the List of Flowers is 5
-                System.assert(extCtrl.lstFlowerWrapper.size() == 5);
-                System.assert(extCtrl.getTotalResuts() == '2');
+                System.assert(extCtrl.lstFlowerWrapper.size() == 5,'There are 5 flowers for Family 3 on the first page');
+                System.assert(extCtrl.getTotalResuts() == '2','Total there are 6 flowers for Family 3. So there will be 2 pages');
                 
                 //Fill the Bouquet Details
                 extCtrl.BouquetRec.Deliver_To__c ='Doctor';
@@ -217,22 +205,29 @@ private class BouquetBuilderTest{
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 10;
                 extCtrl.lstFlowerWrapper[1].Bloom.Quantity__c = 10;
                 
-                system.assertEquals('Green',extCtrl.lstFlowerWrapper[1].Flower.Color__c );
-                extCtrl.last();                         
+                system.assertEquals('Blue',extCtrl.lstFlowerWrapper[0].Flower.Color__c, 'Flowers List if sorted by Color. So first flower is Blue' );
+                system.assertEquals('Green',extCtrl.lstFlowerWrapper[1].Flower.Color__c, 'Flowers List if sorted by Color. So Second flower is Green' );
+                
+                //clicking on Last button so that the Chart is updated
+                extCtrl.last();  
+                                       
                 // get the chart details
                 extCtrl.getChartData();
-                System.assertEquals(60,extCtrl.totalCost);
+                System.assertEquals(60,extCtrl.totalCost,'There are 20 Flowers of $3 each making it 60');
                  
                 //Now change the Flower Family to 'Family1'
                 extCtrl.selectedFlowerFamily = 'Family1';
-                extCtrl.updateFlowersOnFamilyChange(); 
+                extCtrl.fetchFlowers(); 
+                
                 //fill the flower details
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 10;
                 
-                extCtrl.updateFlowersOnFamilyChange();
+                extCtrl.fetchFlowers();
                 extCtrl.getChartData();
+                
                 //check the total cost 
-                System.assertEquals(70,extCtrl.totalCost);
+                System.assertEquals(70,extCtrl.totalCost, 'Added 10 flowers of $1 from Family 1. SO adding 10 to Previous 60');
+                
                 PageReference pgSave = extCtrl.saveBouquet();
                 PageReference pg = new ApexPages.StandardController(extCtrl.bouquetRec).view();  
                 System.assert(extCtrl.bouquetRec.Id != null);
@@ -262,7 +257,7 @@ private class BouquetBuilderTest{
                 extCtrl.last();                         
                 // get the chart details
                 extCtrl.getChartData();
-                System.assertEquals(140,extCtrl.totalCost);    //$1 * 20 + $2 * 30 + 3 *10 + 3* 10
+                System.assertEquals(140,extCtrl.totalCost,'Calculating as per $1 * 20 + $2 * 30 + 3 *10 + 3* 10');    
                 
                 pgSave = extCtrl.saveBouquet();
                 pg = new ApexPages.StandardController(extCtrl.bouquetRec).view();
@@ -310,7 +305,7 @@ private class BouquetBuilderTest{
                 
                 // get the chart details
                 extCtrl.getChartData();
-                System.assertEquals(75,extCtrl.totalCost);    //$1 * 5 + $2 * 5 + $3 *10 + $3 * 10
+                System.assertEquals(75,extCtrl.totalCost,'Calculating as per $1 * 5 + $2 * 5 + $3 *10 + $3 * 10');    
                 
                 //change the quantity to 0 again
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 0;
@@ -324,11 +319,13 @@ private class BouquetBuilderTest{
                 extCtrl.lstFlowerWrapper[0].Bloom.Quantity__c = 10;
                 //got to the Next Page
                 extCtrl.next();
+                
                 //get the chart details
                 extCtrl.getChartData();
-                System.assertEquals(80,extCtrl.totalCost);    //$1 * 10 + $2 * 5 + $3 *10 + $3 * 10
+                System.assertEquals(80,extCtrl.totalCost, 'Calculating as per ($1 * 10) + ($2 * 5) + ($3 *10) + ($3 * 10)');    
                 
                 extCtrl.saveBouquet();
+                
                 //check that the number of blooms are 4
                 blooms = [SELECT Id FROM Bloom__c WHERE Bouquet__c=:extCtrl.bouquetRec.Id];
                 System.assertEquals(4,blooms.size());

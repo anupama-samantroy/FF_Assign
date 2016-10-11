@@ -4,7 +4,7 @@
         <fullName>BouquetBuilderPageSize</fullName>
         <categories>bouquetbuilder</categories>
         <language>en_US</language>
-        <protected>true</protected>
+        <protected>false</protected>
         <shortDescription>BouquetBuilderPageSize</shortDescription>
         <value>5</value>
     </labels>
@@ -12,15 +12,15 @@
         <fullName>CustomerFieldId</fullName>
         <categories>bouquetbuilder</categories>
         <language>en_US</language>
-        <protected>true</protected>
+        <protected>false</protected>
         <shortDescription>CustomerFieldId</shortDescription>
-        <value>CF00N2800000Ep576_lkid</value>
+        <value>CF00N4100000628Fs_lkid</value>
     </labels>
     <labels>
         <fullName>NoFlowersInBouquetMessage</fullName>
         <categories>bouquetbuilder</categories>
         <language>en_US</language>
-        <protected>true</protected>
+        <protected>false</protected>
         <shortDescription>NoFlowersInBouquetMessage</shortDescription>
         <value>No Flowers have been added to this Bouquet.</value>
     </labels>
@@ -28,8 +28,16 @@
         <fullName>NoFlowersinFamily</fullName>
         <categories>bouquetbuilder</categories>
         <language>en_US</language>
-        <protected>true</protected>
+        <protected>false</protected>
         <shortDescription>NoFlowersinFamily</shortDescription>
         <value>No Flowers were found for this family.</value>
+    </labels>
+    <labels>
+        <fullName>SystemExceptionMsg</fullName>
+        <categories>UI</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>SystemExceptionMsg</shortDescription>
+        <value>Error while processing your request. Please contact system admin. Error :</value>
     </labels>
 </CustomLabels>

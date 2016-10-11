@@ -1,12 +1,12 @@
 /* Class Name  : BouquetBuilderExtController 
 * Description  : Extension Controller class for the BouquetBuilder page                
 * Created By   : Developer 1     
-* Created Date : 24-09-2016
+* Created Date : 08-10-2016
 * Modification Log:  
 * --------------------------------------------------------------------------------------------------------------------------------------
 * Developer                Date                 Modification ID        Description 
 * --------------------------------------------------------------------------------------------------------------------------------------
-* Developer 1              24-09-2016           1000                   Initial Version
+* Developer 1              08-10-2016           1000                   Initial Version
 */
 public with sharing class BouquetBuilderExtController {
     
@@ -130,7 +130,7 @@ public with sharing class BouquetBuilderExtController {
         String strQry = '';
         
         if(!isEdit){
-        	
+            
             //if new Bouquet then get all Flowers
             strQry = 'SELECT Id, Name, Family, IsActive, Color__c, Cost__c, HTML_Color_Code__c, Inventory_Remaining__c  FROM Product2';             
         }else{
@@ -195,42 +195,7 @@ public with sharing class BouquetBuilderExtController {
         populateFlowerWrapper();
         
     }
-    /**
-    *   @author         Developer 1
-    *   @description    return True if there is an error (blank quantity for a bloom) in the Flower table
-    *   @return         Boolean
-    *   @parameters     None
-    **/
-    private Boolean checkIsError(){
-    	Boolean isError = False;
-    	for(FlowerWrapper wrap :lstFlowerWrapper){
-    		if(wrap.Bloom.Quantity__c == NULL){
-    			isError = True;
-				wrap.Bloom.Quantity__c.addError('Please enter a value.');
-    		}
-    	}
-    	return isError;
-    }
-    /**
-    *   @author         Developer 1
-    *   @description    Method invoked (through action function) if the flower family is changed
-    *   @return         None
-    *   @parameters     None
-    **/
-    public void updateFlowersOnFamilyChange(){
-    	
-    	Boolean isError = checkIsError();
-    	if(isError){
-    		//revert back the previous selected flower family if any error found
-    		selectedFlowerFamily = prevSelectedFlowerFamily;
-    		showMessage('Please enter a value before changing the flower family.');
-    	}
-    	else{
-        	//fetch the new flowers for any family change
-        	fetchFlowers();
-        }
-    }
-    
+            
     /**
     *   @author         Developer 1
     *   @description    Populate the wrapper list to show on the Bouquet Builder
@@ -241,7 +206,7 @@ public with sharing class BouquetBuilderExtController {
         
         //process the wrapper list if the list of wrapper is not blank
         if(!lstFlowerWrapper.isEmpty()){
-        	processFlowerWrapperList();
+            processFlowerWrapperList();
         }
         // StandardSetController getRecords only fetches the records in the current page
         // and does not retain the values user entered before across pagination
@@ -307,7 +272,7 @@ public with sharing class BouquetBuilderExtController {
                              
                 }            
             }else if(mapBloomToSave.containsKey(fw.flower.Id)){
-            	//process if the Quantity is Zero   
+                //process if the Quantity is Zero   
             
                 if(mapBloomToSave.get(fw.flower.Id).Id != null){
                                   
@@ -338,14 +303,14 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/ 
     public PageReference saveBouquet(){
-        PageReference pg;
+        PageReference pg;  
         List<Bloom__c> lstBloomsToUpsert = new List<Bloom__c>();
         Savepoint sp;
         
         // method to update the user inputs for the current page before hitting "Save" button
         if(!lstFlowerWrapper.isEmpty()){
-        	processFlowerWrapperList();
-        }
+            processFlowerWrapperList();
+        } 
         
         try{
             
@@ -388,29 +353,19 @@ public with sharing class BouquetBuilderExtController {
         
             // to roll back the DML operation if any one of the DML fails
             Database.rollback(sp);
-            showMessage('Error while processing your request. Please contact system admin. Error :' + ex.getMessage());              
+            ApexPages.Message pageMsg = new ApexPages.Message(ApexPages.Severity.Error, System.Label.SystemExceptionMsg + ex.getMessage());            
+            ApexPages.addMessage(pageMsg);                       
             
         }catch(Exception ex){
         
             // to roll back the DML operation if any one of the DML fails
             Database.rollback(sp);
-            showMessage('Error while processing your request. Please contact system admin. Error :' + ex.getMessage());  
+            ApexPages.Message pageMsg = new ApexPages.Message(ApexPages.Severity.Error, System.Label.SystemExceptionMsg + ex.getMessage());            
+            ApexPages.addMessage(pageMsg); 
         }
         
         //return to the Bouquet detail Page if success
         return pg;
-    }
-    
-    /**
-    *   @author         Developer 1
-    *   @description    To add the Message to the Page
-    *   @return         None
-    *   @parameters     None
-    **/
-    public void showMessage(String msg){
-        ApexPages.Message pageMsg;
-        pageMsg = new ApexPages.Message(ApexPages.Severity.Error, msg);            
-        ApexPages.addMessage(pageMsg);
     }
     
     /**
@@ -421,11 +376,10 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/    
     public Pagereference next(){
-    	//check if there is no error (no blank Quantity for the bloom)
-    	if(!checkIsError()){
-	        ssc.next();
-	        populateFlowerWrapper();
-    	}
+        
+        ssc.next();
+        populateFlowerWrapper();
+       
         return null;
     }
     
@@ -437,11 +391,10 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/   
     public Pagereference previous(){
-    	//check if there is no error (no blank Quantity for the bloom)
-    	if(!checkIsError()){
-	        ssc.previous();
-	        populateFlowerWrapper();
-    	}
+        
+        ssc.previous();
+        populateFlowerWrapper();
+       
         return null;
     }
     
@@ -453,11 +406,10 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/    
     public Pagereference first(){
-    	//check if there is no error (no blank Quantity for the bloom)
-        if(!checkIsError()){
-        	ssc.first();
-        	populateFlowerWrapper();
-        }
+        
+        ssc.first();
+        populateFlowerWrapper();
+        
         return null;
     }
     
@@ -469,11 +421,10 @@ public with sharing class BouquetBuilderExtController {
     *   @parameters     None
     **/    
     public Pagereference last(){
-    	//check if there is no error (no blank Quantity for the bloom)
-        if(!checkIsError()){
-        	ssc.last();
-        	populateFlowerWrapper();
-        }
+        
+        ssc.last();
+        populateFlowerWrapper();
+        
         return null;
     }
     
@@ -547,7 +498,7 @@ public with sharing class BouquetBuilderExtController {
                 
                     mapChart.put(flowerRec.Color__c, new PieChartData(flowerRec.Color__c, bloomObj.Quantity__c ));    
                 }else{
-                	//if the flower color is repeated, add the quantity for the same color
+                    //if the flower color is repeated, add the quantity for the same color
                     decimal qty = mapChart.get(flowerRec.Color__c).data + bloomObj.Quantity__c ;
                     mapChart.put(flowerRec.Color__c, new PieChartData(flowerRec.Color__c, qty  ));    
                 }
@@ -603,7 +554,7 @@ public with sharing class BouquetBuilderExtController {
         
         // constructor of inner class
         public PieChartData(String flowerColor, Decimal data) {
-        	
+            
             this.flowerColor = flowerColor;  
             this.data = data;  
         }// end of inner constructor

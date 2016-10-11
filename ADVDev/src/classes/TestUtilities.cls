@@ -30,6 +30,22 @@ Public class TestUtilities{
     }
     
     /*
+    @description   : Method to create Customers 
+    @parameters    : None
+    @return        : List of Lead
+    */
+    public static List<Lead> createCustomers(){
+        //Create the Customer Records
+        List<Lead> lstCustomers = new List<Lead>();
+        for(Integer i = 0 ; i < 5 ; i ++){
+        
+            Lead testLead1 = new Lead(FirstName = 'John'+i, LastName = 'Cena'+i, Company = 'WWE');
+           
+            lstCustomers.add(testLead1);
+        }      
+        return lstCustomers;        
+    }
+    /*
     @description   : Method to create Flowers record
     @parameters    : None
     @return        : List of product2        
@@ -71,6 +87,11 @@ Public class TestUtilities{
         return blm;
     }
     
+    /*
+    @description   : Method to create Flowers records
+    @parameters    : None
+    @return        : List of product2        
+    */
     public static List<Product2> createFlowersForPage(){
         //create Flower records
         List<Product2> lstFlowers = new List<Product2>();
