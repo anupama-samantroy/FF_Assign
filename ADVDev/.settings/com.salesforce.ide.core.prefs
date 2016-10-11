@@ -1,7 +1,7 @@
 eclipse.preferences.version=1
 endpointApiVersion=36.0
-endpointEnvironment=Production/Developer Edition
-endpointServer=login.salesforce.com
+endpointEnvironment=Sandbox
+endpointServer=test.salesforce.com
 httpsProtocol=true
 ideVersion=36.0
 keependpoint=false
@@ -11,4 +11,4 @@ packageName=unpackaged
 preferToolingDeployment=true
 projectIdentifier=IDE-579003994016363611
 readTimeout=600
-username=anupama.samantroy@gmail.com.advdev
+username=candidate@344491advdev.com.developer

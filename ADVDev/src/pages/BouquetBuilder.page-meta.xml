@@ -3,6 +3,6 @@
     <apiVersion>37.0</apiVersion>
     <availableInTouch>false</availableInTouch>
     <confirmationTokenRequired>false</confirmationTokenRequired>
-    <description>This is the page to build the bouquets for the Customers</description>
+    <description>This is the page to build the bouquets for the Customers .</description>
     <label>BouquetBuilder</label>
 </ApexPage>
